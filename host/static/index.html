@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quiz Buzz</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="style.css?v=3" />
+  </head>
+  <body>
+    <main id="stage" class="idle">
+      <div id="backdrop" aria-hidden="true">
+        <i class="bg-icon fa-solid fa-circle-question"></i>
+        <i class="bg-icon fa-solid fa-book"></i>
+        <i class="bg-icon fa-solid fa-trophy"></i>
+        <i class="bg-icon fa-solid fa-brain"></i>
+        <i class="bg-icon fa-solid fa-lightbulb"></i>
+        <i class="bg-icon fa-solid fa-star"></i>
+        <i class="bg-icon fa-solid fa-graduation-cap"></i>
+        <i class="bg-icon fa-solid fa-medal"></i>
+      </div>
+      <header id="brand">
+        <p id="eyebrow">Vědomostní soutěž</p>
+      </header>
+      <div id="hero">
+        <h1 id="title">Čeká se na přihlášení</h1>
+        <div id="dots" aria-hidden="true"></div>
+        <p id="hint">První zmáčknuté tlačítko získá slovo</p>
+      </div>
+      <div id="play-area">
+        <div id="award">
+          <button type="button" data-points="1">+1 bod</button>
+          <button type="button" data-points="2">+2 body</button>
+          <button type="button" data-points="3">+3 body</button>
+        </div>
+      </div>
+      <ol id="scoreboard"></ol>
+      <p id="farewell" hidden>Děkujeme za hru</p>
+    </main>
+    <footer>
+      <span id="status">Připojování…</span>
+      <div id="controls">
+        <button id="reset" type="button">Reset (mezerník)</button>
+        <button id="finish" type="button">Konec</button>
+        <button id="new-game" type="button" hidden>Nová hra</button>
+      </div>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>
