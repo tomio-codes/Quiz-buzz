@@ -10,7 +10,7 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <link rel="stylesheet" href="style.css?v=3" />
+    <link rel="stylesheet" href="style.css?v=11" />
   </head>
   <body>
     <main id="stage" class="idle">
@@ -24,23 +24,29 @@
         <i class="bg-icon fa-solid fa-graduation-cap"></i>
         <i class="bg-icon fa-solid fa-medal"></i>
       </div>
-      <header id="brand">
-        <p id="eyebrow">Vědomostní soutěž</p>
-      </header>
-      <div id="hero">
-        <h1 id="title">Čeká se na přihlášení</h1>
-        <div id="dots" aria-hidden="true"></div>
-        <p id="hint">První zmáčknuté tlačítko získá slovo</p>
-      </div>
-      <div id="play-area">
-        <div id="award">
-          <button type="button" data-points="1">+1 bod</button>
-          <button type="button" data-points="2">+2 body</button>
-          <button type="button" data-points="3">+3 body</button>
+      <div id="stage-fit">
+        <div id="stage-scale">
+        <div id="stage-content">
+          <header id="brand">
+            <p id="eyebrow">Vědomostní soutěž</p>
+          </header>
+          <div id="hero">
+            <h1 id="title">Čeká se na přihlášení</h1>
+            <div id="dots" aria-hidden="true"></div>
+            <p id="hint">První zmáčknuté tlačítko získá slovo</p>
+          </div>
+          <div id="play-area">
+            <div id="award">
+              <button type="button" data-points="1">+1 bod</button>
+              <button type="button" data-points="2">+2 body</button>
+              <button type="button" data-points="3">+3 body</button>
+            </div>
+          </div>
+          <ol id="scoreboard"></ol>
+          <p id="farewell" hidden>Děkujeme za hru</p>
+        </div>
         </div>
       </div>
-      <ol id="scoreboard"></ol>
-      <p id="farewell" hidden>Děkujeme za hru</p>
     </main>
     <footer>
       <span id="status">Připojování…</span>

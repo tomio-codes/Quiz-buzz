@@ -3,11 +3,11 @@
 #include <Arduino.h>
 
 static const uint8_t PIN_BUTTON = 4;
-static const uint8_t PIN_BOOT = 9;
 static const uint8_t PIN_LED = 8;
 static const uint8_t PIN_STATUS = 3;
 static const bool LED_ACTIVE_LOW = true;
-static const uint32_t DEBOUNCE_MS = 40;
+static const uint32_t DEBOUNCE_MS = 30;
+static const uint32_t BUZZ_COOLDOWN_MS = 250;
 
 inline void ledWrite(bool on) {
   digitalWrite(PIN_LED, LED_ACTIVE_LOW ? !on : on);
@@ -15,32 +15,38 @@ inline void ledWrite(bool on) {
 
 class DebouncedButton {
  public:
-  explicit DebouncedButton(uint8_t pin)
-      : pin_(pin), last_stable_(true), last_read_(true), last_change_ms_(0) {}
+  explicit DebouncedButton(uint8_t pin) : pin_(pin) {}
 
   void begin() {
     pinMode(pin_, INPUT_PULLUP);
-    last_stable_ = digitalRead(pin_);
-    last_read_ = last_stable_;
+    last_read_ = digitalRead(pin_);
+    last_stable_ = last_read_;
+    edge_ms_ = millis();
   }
 
   bool pressed() {
     const bool now = digitalRead(pin_);
-    const uint32_t now_ms = millis();
+    const uint32_t t = millis();
     if (now != last_read_) {
       last_read_ = now;
-      last_change_ms_ = now_ms;
+      edge_ms_ = t;
     }
-    if ((now_ms - last_change_ms_) > DEBOUNCE_MS && now != last_stable_) {
-      last_stable_ = now;
-      return last_stable_ == LOW;
+    if ((t - edge_ms_) < DEBOUNCE_MS) {
+      return false;
+    }
+    if (now == LOW && last_stable_ == HIGH) {
+      last_stable_ = LOW;
+      return true;
+    }
+    if (now == HIGH) {
+      last_stable_ = HIGH;
     }
     return false;
   }
 
  private:
   uint8_t pin_;
-  bool last_stable_;
-  bool last_read_;
-  uint32_t last_change_ms_;
+  bool last_read_ = true;
+  bool last_stable_ = true;
+  uint32_t edge_ms_ = 0;
 };

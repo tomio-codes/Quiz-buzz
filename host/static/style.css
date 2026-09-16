@@ -2,6 +2,7 @@
   --bg: #0d1117;
   --fg: #f0f3f7;
   --muted: #9aa6b2;
+  --u: min(1vw, 1.6vh);
   color-scheme: dark;
 }
 
@@ -13,12 +14,13 @@
 html,
 body {
   height: 100%;
+  overflow: hidden;
 }
 
 body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100dvh;
   font-family: "Segoe UI", "Noto Sans", sans-serif;
   background:
     radial-gradient(circle at top, #18202b, var(--bg) 62%),
@@ -29,18 +31,95 @@ body {
 #stage {
   position: relative;
   isolation: isolate;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2.5vh 2rem 3rem;
-  text-align: center;
+  min-height: 0;
+  overflow: hidden;
   transition: background-color 160ms ease;
 }
 
 #stage > :not(#backdrop) {
   position: relative;
   z-index: 1;
+}
+
+#stage-fit {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(0.35rem, 1.2vmin, 1rem);
+}
+
+#stage-scale {
+  width: min(100%, 80rem);
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+@media (min-aspect-ratio: 4/3) and (min-width: 800px) {
+  #stage-scale {
+    width: min(94vw, 80rem);
+  }
+
+  #eyebrow {
+    font-size: clamp(1.4rem, 2.2vw, 3rem);
+  }
+
+  #title {
+    font-size: clamp(2.4rem, 6.5vw, 8rem);
+  }
+
+  #hint {
+    font-size: clamp(1rem, 1.8vw, 1.8rem);
+  }
+
+  #hero {
+    gap: clamp(1rem, 2.2vh, 2rem);
+  }
+
+  #scoreboard li {
+    font-size: clamp(1.3rem, 2.4vw, 3.2rem);
+    flex: 1 1 clamp(10rem, 28vw, 24rem);
+    padding: clamp(0.75rem, 1.8vh, 1.4rem) clamp(1rem, 2vw, 2rem);
+  }
+
+  #stage.finished #scoreboard {
+    gap: clamp(0.85rem, 2vh, 1.75rem);
+  }
+
+  #stage.finished #scoreboard li {
+    font-size: clamp(1.5rem, 2.8vw, 3.6rem);
+    padding: clamp(1rem, 2.2vh, 2rem) clamp(1rem, 2.5vw, 2.2rem);
+  }
+
+  #stage.finished #scoreboard .place {
+    font-size: clamp(0.9rem, 1.6vw, 1.5rem);
+  }
+
+  .place-medal {
+    font-size: clamp(2.8rem, 5.5vw, 6.5rem);
+  }
+
+  #farewell {
+    font-size: clamp(1.1rem, 2vw, 2.2rem);
+  }
+
+  #award button {
+    font-size: clamp(1rem, 1.8vw, 1.9rem);
+    min-width: clamp(6rem, 14vw, 10rem);
+  }
+}
+
+#stage-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.35rem, 1.2vmin, 0.9rem);
+  transform-origin: top left;
+  text-align: center;
 }
 
 #backdrop {
@@ -53,7 +132,7 @@ body {
 
 .bg-icon {
   position: absolute;
-  font-size: clamp(3.5rem, 9vw, 7.5rem);
+  font-size: clamp(2rem, 8vmin, 7rem);
   line-height: 1;
   color: #9eb4cc;
   opacity: 0.16;
@@ -68,7 +147,7 @@ body {
 #backdrop .bg-icon:nth-child(2) {
   top: 12%;
   right: 6%;
-  font-size: clamp(4rem, 10vw, 8rem);
+  font-size: clamp(2.2rem, 9vmin, 7.5rem);
   transform: rotate(8deg);
 }
 
@@ -82,7 +161,7 @@ body {
 #backdrop .bg-icon:nth-child(4) {
   top: 36%;
   right: 4%;
-  font-size: clamp(4.5rem, 11vw, 8.5rem);
+  font-size: clamp(2.4rem, 10vmin, 8rem);
   transform: rotate(10deg);
 }
 
@@ -103,7 +182,7 @@ body {
 #backdrop .bg-icon:nth-child(7) {
   top: 58%;
   left: 16%;
-  font-size: clamp(3rem, 7vw, 6rem);
+  font-size: clamp(1.6rem, 6vmin, 5.5rem);
   transform: rotate(15deg);
   opacity: 0.13;
 }
@@ -115,6 +194,7 @@ body {
 }
 
 #stage.idle,
+#stage.waiting,
 #stage.finished,
 #stage.paused {
   background: transparent;
@@ -145,33 +225,35 @@ body {
 #eyebrow {
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-size: clamp(1rem, 3.8vmin, 2.8rem);
   font-weight: 650;
   opacity: 0.92;
 }
 
 #hero {
   width: 100%;
-  min-height: 42vh;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
-  flex-shrink: 0;
+  gap: clamp(0.85rem, 2.8vmin, 1.75rem);
 }
 
 #title {
   width: min(100%, 22ch);
-  min-height: 2.1em;
-  font-size: clamp(2.8rem, 9vw, 7.5rem);
-  line-height: 0.95;
+  font-size: clamp(1.6rem, 9vmin, 7rem);
+  line-height: 1.12;
   font-weight: 750;
+  padding-bottom: 0.06em;
 }
 
 #hint {
-  font-size: clamp(1rem, 2.4vw, 1.6rem);
+  font-size: clamp(0.85rem, 2.4vmin, 1.5rem);
+  line-height: 1.35;
   color: var(--muted);
+  margin-top: clamp(0.15rem, 0.6vmin, 0.45rem);
 }
 
 #stage.locked #hint {
@@ -182,7 +264,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(0.25rem, 1vmin, 0.75rem);
   flex-shrink: 0;
 }
 
@@ -190,24 +272,26 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1rem;
-  width: min(80rem, 100%);
+  gap: clamp(0.35rem, 1.2vmin, 0.9rem);
+  width: 100%;
   margin-top: auto;
-  padding: 0;
-  padding-top: 2rem;
+  padding-top: clamp(0.25rem, 1vmin, 1rem);
   list-style: none;
+  flex-shrink: 0;
 }
 
 #scoreboard li {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 18rem;
-  padding: 1rem 1.5rem;
-  border-radius: 1rem;
+  flex: 1 1 clamp(8rem, 28vmin, 18rem);
+  max-width: 100%;
+  min-width: 0;
+  padding: clamp(0.45rem, 1.4vmin, 1rem) clamp(0.6rem, 2vmin, 1.4rem);
+  border-radius: clamp(0.5rem, 1.2vmin, 1rem);
   background: color-mix(in srgb, var(--team) 22%, #111a);
   border: 2px solid var(--team);
-  font-size: clamp(1.6rem, 3.6vw, 2.8rem);
+  font-size: clamp(0.95rem, 3.2vmin, 2.6rem);
   font-weight: 650;
 }
 
@@ -215,7 +299,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
+  gap: clamp(0.15rem, 0.5vmin, 0.4rem);
   width: 100%;
   text-align: center;
 }
@@ -232,27 +316,8 @@ body {
   text-align: center;
 }
 
-#stage.finished {
-  justify-content: center;
-  gap: 0;
-  padding-top: 3vh;
-  padding-bottom: 3vh;
-}
-
-#stage.finished #brand {
-  margin-bottom: 2vh;
-}
-
 #stage.finished #hero {
-  min-height: 0;
-  gap: 0;
-  margin-bottom: 5vh;
-  padding: 0.5rem 0;
-}
-
-#stage.finished #title {
-  min-height: 0;
-  width: auto;
+  flex: 0 1 auto;
 }
 
 #stage.finished #play-area {
@@ -262,22 +327,32 @@ body {
 #stage.finished #scoreboard {
   flex-direction: column;
   align-items: stretch;
-  gap: 1.4rem;
+  width: 100%;
+  gap: clamp(0.65rem, 2.2vmin, 1.5rem);
   margin-top: 0;
   padding-top: 0;
 }
 
 #stage.finished #scoreboard li {
-  display: grid;
-  grid-template-columns: minmax(14rem, auto) 1fr;
+  position: relative;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  min-width: 0;
-  padding: 1.2rem 1.6rem;
-  font-size: clamp(1.8rem, 4vw, 3.2rem);
+  width: 100%;
+  flex: 0 0 auto;
+  padding: clamp(0.75rem, 2.2vmin, 1.5rem) clamp(0.75rem, 2.2vmin, 1.6rem);
+  font-size: clamp(1rem, 3.6vmin, 2.8rem);
+}
+
+#stage.finished #scoreboard .place {
+  position: absolute;
+  left: clamp(0.75rem, 2.2vmin, 1.6rem);
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 #stage.finished #scoreboard .team-card {
-  justify-self: center;
+  gap: clamp(0.4rem, 1.4vmin, 0.85rem);
 }
 
 #stage.finished #scoreboard .team-score {
@@ -298,42 +373,35 @@ body {
 
 #farewell {
   width: 100%;
-  margin-top: 1.2rem;
+  margin-top: clamp(0.85rem, 2.8vmin, 1.75rem);
   text-align: center;
-  font-size: clamp(1.2rem, 2.8vw, 2rem);
+  font-size: clamp(0.9rem, 2.4vmin, 1.8rem);
+  line-height: 1.35;
   color: var(--muted);
-}
-
-#stage.finished #farewell {
-  margin-top: 4vh;
+  flex-shrink: 0;
 }
 
 #scoreboard .place {
   display: flex;
   align-items: center;
-  gap: 0.6em;
+  gap: 0.5em;
   text-align: left;
   white-space: nowrap;
   flex-shrink: 0;
-  font-size: 0.55em;
-  letter-spacing: 0.06em;
+  font-size: clamp(0.75rem, 2vmin, 1.2rem);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0.9;
 }
 
-#stage.finished #scoreboard .place {
-  font-size: clamp(1rem, 2.2vw, 1.4rem);
-  letter-spacing: 0.04em;
-}
-
 .place-medal {
-  font-size: 1.35em;
+  font-size: clamp(1.8rem, 6vmin, 5.5rem);
   line-height: 1;
   flex-shrink: 0;
 }
 
 #stage.finished #scoreboard .place-medal {
-  font-size: clamp(2.6rem, 5.5vw, 4.2rem);
+  font-size: clamp(2rem, 6.5vmin, 6rem);
 }
 
 #stage.finished #scoreboard li:nth-child(1) .place-medal {
@@ -350,7 +418,7 @@ body {
 
 #award {
   display: none;
-  gap: 0.8rem;
+  gap: clamp(0.35rem, 1vmin, 0.75rem);
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -360,17 +428,20 @@ body {
 }
 
 #award button {
-  min-width: 8rem;
-  padding: 1rem 1.4rem;
-  font-size: clamp(1.1rem, 2.4vw, 1.8rem);
+  min-width: clamp(5rem, 18vmin, 8rem);
+  padding: clamp(0.45rem, 1.4vmin, 0.9rem) clamp(0.65rem, 2vmin, 1.2rem);
+  font-size: clamp(0.85rem, 2.4vmin, 1.6rem);
 }
 
 #dots {
   display: flex;
   justify-content: center;
-  gap: 1.2rem;
-  min-height: 1.8rem;
+  gap: clamp(0.65rem, 2vmin, 1.25rem);
+  min-height: clamp(1.1rem, 3vmin, 1.75rem);
+  padding: clamp(0.35rem, 1.2vmin, 0.75rem) 0;
+  margin-top: clamp(0.25rem, 0.8vmin, 0.6rem);
   align-items: center;
+  flex-shrink: 0;
 }
 
 #stage.finished #dots,
@@ -380,19 +451,38 @@ body {
 }
 
 #dots span {
-  width: 1.6rem;
-  height: 1.6rem;
+  width: clamp(0.75rem, 2vmin, 1.4rem);
+  height: clamp(0.75rem, 2vmin, 1.4rem);
   border-radius: 50%;
+  background: var(--team-color);
+  opacity: 1;
+}
+
+#dots span.offline {
+  animation: dot-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes dot-blink {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 1.2rem;
+  gap: clamp(0.35rem, 1vmin, 0.75rem);
+  padding: clamp(0.4rem, 1.2vmin, 0.85rem) clamp(0.6rem, 1.8vmin, 1.1rem);
   background: rgba(8, 11, 16, 0.92);
   border-top: 1px solid #223041;
+  font-size: clamp(0.75rem, 1.8vmin, 0.95rem);
+  flex-shrink: 0;
 }
 
 #status {
@@ -402,16 +492,17 @@ footer {
 #controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: clamp(0.3rem, 0.8vmin, 0.55rem);
 }
 
 button {
   border: 0;
   border-radius: 999px;
-  padding: 0.7rem 1.2rem;
+  padding: clamp(0.35rem, 1.1vmin, 0.65rem) clamp(0.55rem, 1.8vmin, 1rem);
   background: #f0f3f7;
   color: #111;
   font: inherit;
+  font-size: clamp(0.75rem, 1.8vmin, 0.95rem);
   font-weight: 650;
   cursor: pointer;
 }

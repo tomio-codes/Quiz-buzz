@@ -19,6 +19,9 @@
 static volatile uint8_t locked_team = 0;
 static volatile uint32_t last_seen_ms[TEAM_COUNT + 1];
 static volatile uint8_t seen_mask = 0;
+static volatile uint8_t pending_alive[TEAM_COUNT + 1] = {};
+static volatile uint32_t pending_alive_seq[TEAM_COUNT + 1] = {};
+static volatile uint8_t pending_buzz_report = 0;
 static DebouncedButton reset_button(PIN_BUTTON);
 static DebouncedButton boot_button(PIN_BOOT);
 
@@ -60,6 +63,19 @@ static void unlock() {
   broadcast_round(PKT_UNLOCK, 0);
 }
 
+static void flush_pending_alive() {
+  for (uint8_t team = 1; team <= TEAM_COUNT; team++) {
+    if (!pending_alive[team]) {
+      continue;
+    }
+    pending_alive[team] = 0;
+    Serial.print("ALIVE ");
+    Serial.print(team);
+    Serial.print(" ");
+    Serial.println(pending_alive_seq[team]);
+  }
+}
+
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 static void on_recv(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
   (void)info;
@@ -81,25 +97,27 @@ static void on_recv(const uint8_t *mac, const uint8_t *data, int len) {
   }
 
   mark_seen(packet.team_id);
-  if (packet.kind == PKT_BUZZ && locked_team == 0) {
-    locked_team = packet.team_id;
+  if (packet.kind == PKT_HELLO) {
+    pending_alive_seq[packet.team_id] = packet.seq;
+    pending_alive[packet.team_id] = 1;
+  }
+  if (packet.kind == PKT_BUZZ) {
+    pending_buzz_report = packet.team_id;
+    if (locked_team == 0) {
+      locked_team = packet.team_id;
+    }
   }
 }
 
 static void report_links() {
   static bool linked[TEAM_COUNT + 1] = {};
-  static uint32_t last_alive_ms[TEAM_COUNT + 1] = {};
   const uint32_t now = millis();
   const uint8_t seen = seen_mask;
   for (uint8_t team = 1; team <= TEAM_COUNT; team++) {
-    const bool alive = (seen & (1 << team)) != 0 && (now - last_seen_ms[team]) < LINK_TIMEOUT_MS;
+    const bool alive =
+        (seen & (1 << team)) != 0 && (now - last_seen_ms[team]) < HEARTBEAT_PAUSE_MS;
     if (alive) {
-      if (!linked[team] || (now - last_alive_ms[team]) >= HELLO_INTERVAL_MS) {
-        linked[team] = true;
-        last_alive_ms[team] = now;
-        Serial.print("ALIVE ");
-        Serial.println(team);
-      }
+      linked[team] = true;
       continue;
     }
     if (linked[team]) {
@@ -148,11 +166,24 @@ void setup() {
 
 void loop() {
   static uint8_t last_reported = 0;
+
+  while (Serial.available() > 0) {
+    String line = Serial.readStringUntil('\n');
+    line.trim();
+    handle_serial_line(line);
+  }
+
   const uint8_t team = locked_team;
 
-  if (team != 0 && team != last_reported) {
+  flush_pending_alive();
+
+  if (pending_buzz_report != 0) {
     Serial.print("BUZZ ");
-    Serial.println(team);
+    Serial.println(pending_buzz_report);
+    pending_buzz_report = 0;
+  }
+
+  if (team != 0 && team != last_reported) {
     broadcast_round(PKT_LOCK, team);
     last_reported = team;
   }
@@ -166,11 +197,5 @@ void loop() {
   if (reset_button.pressed() || boot_button.pressed()) {
     unlock();
     Serial.println("RESET");
-  }
-
-  while (Serial.available() > 0) {
-    String line = Serial.readStringUntil('\n');
-    line.trim();
-    handle_serial_line(line);
   }
 }

@@ -19,10 +19,10 @@
 #include "protocol.h"
 
 static DebouncedButton buzz_button(PIN_BUTTON);
-static DebouncedButton boot_button(PIN_BOOT);
 static uint32_t seq = 0;
 static uint32_t led_until_ms = 0;
 static uint32_t last_hello_ms = 0;
+static uint32_t buzz_cooldown_until_ms = 0;
 
 static void statusWrite(bool on) { digitalWrite(PIN_STATUS, on ? HIGH : LOW); }
 
@@ -33,6 +33,13 @@ static void send_packet(uint8_t kind) {
   packet.team_id = TEAM_ID;
   packet.seq = ++seq;
   esp_now_send(BROADCAST_ADDR, reinterpret_cast<uint8_t *>(&packet), sizeof(packet));
+}
+
+static void send_buzz() {
+  for (uint8_t i = 0; i < 3; i++) {
+    send_packet(PKT_BUZZ);
+    delay(5);
+  }
 }
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
@@ -67,7 +74,6 @@ void setup() {
   ledWrite(false);
   statusWrite(false);
   buzz_button.begin();
-  boot_button.begin();
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
@@ -102,9 +108,10 @@ void setup() {
 
 void loop() {
   const uint32_t now = millis();
-  if (buzz_button.pressed() || boot_button.pressed()) {
-    send_packet(PKT_BUZZ);
+  if (now >= buzz_cooldown_until_ms && buzz_button.pressed()) {
+    send_buzz();
     led_until_ms = now + 250;
+    buzz_cooldown_until_ms = now + BUZZ_COOLDOWN_MS;
   }
   if (now - last_hello_ms >= HELLO_INTERVAL_MS) {
     last_hello_ms = now;

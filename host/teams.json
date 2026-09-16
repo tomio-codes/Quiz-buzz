@@ -1,5 +1,6 @@
 {
   "1": { "name": "Červený tým", "color": "#E53935" },
   "2": { "name": "Zelený tým", "color": "#43A047" },
-  "3": { "name": "Modrý tým", "color": "#1E88E5" }
+  "3": { "name": "Modrý tým", "color": "#1E88E5" },
+  "4": { "name": "Žlutý tým", "color": "#FDD835" }
 }

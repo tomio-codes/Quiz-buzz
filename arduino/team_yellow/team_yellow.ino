@@ -1,5 +1,5 @@
 /*
-  Quiz Buzz — červený tým (ESP32-C3)
+  Quiz Buzz — žlutý tým (ESP32-C3)
 
   Arduino IDE:
     Deska: ESP32C3 Dev Module
@@ -7,7 +7,7 @@
     Flash Mode: DIO
 */
 
-#define TEAM_ID 1
+#define TEAM_ID 4
 
 #include <WiFi.h>
 #include <cstring>

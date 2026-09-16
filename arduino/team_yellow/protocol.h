@@ -2,9 +2,9 @@
 
 #include <stdint.h>
 
+static const uint8_t TEAM_COUNT = 4;
 static const uint32_t BUZZ_MAGIC = 0x42555A5A;
 static const uint8_t WIFI_CHANNEL = 1;
-static const uint8_t TEAM_COUNT = 4;
 static const uint8_t PKT_BUZZ = 1;
 static const uint8_t PKT_HELLO = 2;
 static const uint8_t PKT_LOCK = 3;

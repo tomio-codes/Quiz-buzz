@@ -9,6 +9,8 @@ const resetButton = document.getElementById("reset");
 const finishButton = document.getElementById("finish");
 const newGameButton = document.getElementById("new-game");
 const farewell = document.getElementById("farewell");
+const stageScale = document.getElementById("stage-scale");
+const stageContent = document.getElementById("stage-content");
 
 let teams = {};
 let demo = false;
@@ -76,8 +78,70 @@ function offlineTeamNames(state) {
   return (state.offline_teams || []).map((id) => teams[String(id)].name);
 }
 
+function fitStage() {
+  if (stageContent === null || stageScale === null) {
+    return;
+  }
+  stageContent.style.transform = "none";
+  stageContent.style.width = "";
+  stageScale.style.width = "";
+  stageScale.style.height = "";
+
+  const footer = document.querySelector("footer");
+  const fit = document.getElementById("stage-fit");
+  const fitStyles = fit ? getComputedStyle(fit) : null;
+  const padX = fitStyles
+    ? parseFloat(fitStyles.paddingLeft) + parseFloat(fitStyles.paddingRight)
+    : 0;
+  const padY = fitStyles
+    ? parseFloat(fitStyles.paddingTop) + parseFloat(fitStyles.paddingBottom)
+    : 0;
+  const availH = window.innerHeight - footer.offsetHeight - padY;
+  const availW = window.innerWidth - padX;
+  const isWide = availW / availH >= 1.2;
+
+  const naturalW = stageContent.offsetWidth;
+  const naturalH = stageContent.scrollHeight;
+  const scaleH = (availH * 0.98) / naturalH;
+  const scaleW = (availW * 0.98) / naturalW;
+
+  if (isWide && scaleH < 1) {
+    const scale = Math.min(1, scaleH);
+    const targetW = availW * 0.98;
+    stageContent.style.width = `${targetW / scale}px`;
+    stageContent.style.transformOrigin = "top left";
+    stageContent.style.transform = `scale(${scale})`;
+    stageScale.style.width = `${targetW}px`;
+    stageScale.style.height = `${naturalH * scale}px`;
+    return;
+  }
+
+  const scale = Math.min(1, scaleH, scaleW);
+  if (scale >= 0.999) {
+    return;
+  }
+
+  stageContent.style.width = `${naturalW}px`;
+  stageContent.style.transformOrigin = "top left";
+  stageContent.style.transform = `scale(${scale})`;
+  stageScale.style.width = `${naturalW * scale}px`;
+  stageScale.style.height = `${naturalH * scale}px`;
+}
+
+function scheduleFitStage() {
+  requestAnimationFrame(fitStage);
+}
+
+function renderTeamDots(state) {
+  const connected = new Set((state.connected_teams || []).map(String));
+  for (const dot of dots.querySelectorAll("[data-team-id]")) {
+    dot.classList.toggle("offline", !connected.has(dot.dataset.teamId));
+  }
+}
+
 function render(state) {
   currentStatus = state.status;
+  renderTeamDots(state);
   renderScoreboard(state);
   const canAward = state.status === "locked";
   for (const button of award.querySelectorAll("button")) {
@@ -88,11 +152,25 @@ function render(state) {
   resetButton.hidden = finished;
   finishButton.hidden = finished;
   newGameButton.hidden = !finished;
-  resetButton.disabled = finished || paused;
-  finishButton.disabled = finished || paused;
+  const waiting = state.status === "waiting";
+  resetButton.disabled = finished || waiting;
+  finishButton.disabled = finished || paused || waiting;
 
   farewell.hidden = true;
   hint.hidden = false;
+
+  if (state.status === "waiting") {
+    stage.className = "waiting";
+    stage.style.background = "";
+    title.textContent = "Čeká se na tlačítka";
+    const names = Object.values(teams)
+      .map((team) => team.name)
+      .join(", ");
+    hint.textContent = `Připojte tlačítka: ${names} (${state.online_count}/${state.min_teams})`;
+    statusEl.textContent = "Čekání…";
+    scheduleFitStage();
+    return;
+  }
 
   if (state.status === "paused") {
     const names = offlineTeamNames(state);
@@ -105,6 +183,7 @@ function render(state) {
     }
     hint.textContent = "Hra je pozastavena do obnovení spojení";
     statusEl.textContent = "Pozastaveno";
+    scheduleFitStage();
     return;
   }
 
@@ -115,6 +194,7 @@ function render(state) {
     hint.hidden = true;
     farewell.hidden = false;
     statusEl.textContent = "Soutěž skončila";
+    scheduleFitStage();
     return;
   }
 
@@ -125,6 +205,7 @@ function render(state) {
     title.textContent = team.name;
     hint.textContent = "Kolik bodů za odpověď?";
     statusEl.textContent = `${team.name} přihlášen`;
+    scheduleFitStage();
     return;
   }
 
@@ -133,10 +214,11 @@ function render(state) {
   title.textContent = "Čeká se na přihlášení";
   hint.textContent = "První zmáčknuté tlačítko získá slovo";
   statusEl.textContent = "Připraveno";
+  scheduleFitStage();
 }
 
 async function reset() {
-  if (currentStatus === "finished" || currentStatus === "paused") {
+  if (currentStatus === "finished" || currentStatus === "waiting") {
     return;
   }
   await fetch("/api/reset", { method: "POST" });
@@ -174,13 +256,17 @@ async function start() {
   demo = config.demo;
   teams = await (await fetch("/api/teams")).json();
   dots.innerHTML = "";
-  for (const team of Object.values(teams)) {
+  for (const id of Object.keys(teams).sort((a, b) => Number(a) - Number(b))) {
     const dot = document.createElement("span");
-    dot.style.background = team.color;
+    dot.dataset.teamId = id;
+    dot.style.setProperty("--team-color", teams[id].color);
+    dot.classList.add("offline");
     dots.appendChild(dot);
   }
 
   render(await (await fetch("/api/state")).json());
+  window.addEventListener("resize", scheduleFitStage);
+  window.addEventListener("load", scheduleFitStage);
 
   const events = new EventSource("/api/events");
   events.onmessage = (event) => {
@@ -209,14 +295,15 @@ async function start() {
       event.preventDefault();
       reset();
     }
-    if (event.key === "1" || event.key === "2" || event.key === "3") {
+    if (/^[1-4]$/.test(event.key)) {
       const n = Number(event.key);
       if (currentStatus === "locked") {
         event.preventDefault();
         awardPoints(n);
         return;
       }
-      if (demo && currentStatus === "idle") {
+      if (demo && currentStatus === "idle" && n in teams) {
+        event.preventDefault();
         demoBuzz(n);
       }
     }
