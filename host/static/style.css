@@ -46,8 +46,9 @@ body {
   height: 100%;
   min-height: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: stretch;
   overflow: hidden;
   padding: clamp(0.35rem, 1.2vmin, 1rem);
 }
@@ -55,7 +56,10 @@ body {
 #stage-scale {
   width: min(100%, 80rem);
   max-width: 100%;
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (min-aspect-ratio: 4/3) and (min-width: 800px) {
@@ -72,16 +76,18 @@ body {
   }
 
   #hint {
-    font-size: clamp(1rem, 1.8vw, 1.8rem);
+    font-size: clamp(1.15rem, 2.2vw, 2.1rem);
   }
 
   #hero {
-    gap: clamp(1rem, 2.2vh, 2rem);
+    gap: clamp(1.75rem, 4vh, 3.25rem);
   }
 
   #scoreboard li {
     font-size: clamp(1.3rem, 2.4vw, 3.2rem);
-    flex: 1 1 clamp(10rem, 28vw, 24rem);
+    flex: 1 1 0;
+    min-width: clamp(8rem, 14vw, 12rem);
+    max-width: clamp(12rem, 20vw, 19rem);
     padding: clamp(0.75rem, 1.8vh, 1.4rem) clamp(1rem, 2vw, 2rem);
   }
 
@@ -114,6 +120,8 @@ body {
 
 #stage-content {
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -220,6 +228,8 @@ body {
   width: 100%;
   flex-shrink: 0;
   text-align: center;
+  margin-top: clamp(1rem, 3.5vmin, 2.5rem);
+  margin-bottom: clamp(0.75rem, 2.5vmin, 1.75rem);
 }
 
 #eyebrow {
@@ -233,16 +243,17 @@ body {
 #hero {
   width: 100%;
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: clamp(12rem, 32vmin, 22rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: clamp(0.85rem, 2.8vmin, 1.75rem);
+  gap: clamp(1.5rem, 4.5vmin, 3rem);
 }
 
 #title {
   width: min(100%, 22ch);
+  min-height: calc(2 * 1.12em);
   font-size: clamp(1.6rem, 9vmin, 7rem);
   line-height: 1.12;
   font-weight: 750;
@@ -250,10 +261,9 @@ body {
 }
 
 #hint {
-  font-size: clamp(0.85rem, 2.4vmin, 1.5rem);
+  font-size: clamp(1rem, 3vmin, 1.85rem);
   line-height: 1.35;
   color: var(--muted);
-  margin-top: clamp(0.15rem, 0.6vmin, 0.45rem);
 }
 
 #stage.locked #hint {
@@ -265,15 +275,18 @@ body {
   flex-direction: column;
   align-items: center;
   gap: clamp(0.25rem, 1vmin, 0.75rem);
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  min-height: clamp(2.8rem, 8vmin, 4rem);
+  justify-content: center;
 }
 
 #scoreboard {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: clamp(0.35rem, 1.2vmin, 0.9rem);
+  gap: clamp(0.5rem, 1.6vmin, 1.1rem);
   width: 100%;
+  max-width: min(100%, 64rem);
   margin-top: auto;
   padding-top: clamp(0.25rem, 1vmin, 1rem);
   list-style: none;
@@ -284,9 +297,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 clamp(8rem, 28vmin, 18rem);
-  max-width: 100%;
-  min-width: 0;
+  flex: 1 1 0;
+  min-width: clamp(7rem, 16vmin, 12rem);
+  max-width: clamp(11rem, 24vmin, 20rem);
   padding: clamp(0.45rem, 1.4vmin, 1rem) clamp(0.6rem, 2vmin, 1.4rem);
   border-radius: clamp(0.5rem, 1.2vmin, 1rem);
   background: color-mix(in srgb, var(--team) 22%, #111a);
@@ -417,14 +430,21 @@ body {
 }
 
 #award {
-  display: none;
+  display: flex;
   gap: clamp(0.35rem, 1vmin, 0.75rem);
   flex-wrap: wrap;
   justify-content: center;
+  min-height: clamp(2.4rem, 7vmin, 3.6rem);
+  align-items: center;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 #stage.locked #award {
-  display: flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 #award button {
@@ -433,20 +453,38 @@ body {
   font-size: clamp(0.85rem, 2.4vmin, 1.6rem);
 }
 
+@keyframes award-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.4);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+#award button.award-pop-active {
+  animation: award-pop 0.55s ease-out;
+  transform-origin: center center;
+}
+
 #dots {
   display: flex;
   justify-content: center;
   gap: clamp(0.65rem, 2vmin, 1.25rem);
   min-height: clamp(1.1rem, 3vmin, 1.75rem);
-  padding: clamp(0.35rem, 1.2vmin, 0.75rem) 0;
-  margin-top: clamp(0.25rem, 0.8vmin, 0.6rem);
+  width: 100%;
+  margin-top: 100px;
+  padding: clamp(0.5rem, 1.5vmin, 1rem) 0;
   align-items: center;
   flex-shrink: 0;
 }
 
-#stage.finished #dots,
-#stage.finished #award,
-#stage.paused #award {
+#stage.finished #dots {
   display: none;
 }
 

@@ -15,6 +15,10 @@ const stageContent = document.getElementById("stage-content");
 let teams = {};
 let demo = false;
 let currentStatus = "idle";
+let lastState = null;
+let holdLockedTeamId = null;
+let holdLockedTimer = null;
+const AWARD_UI_HOLD_MS = 580;
 
 function playBuzz() {
   const ctx = new AudioContext();
@@ -129,7 +133,51 @@ function fitStage() {
 }
 
 function scheduleFitStage() {
+  if (holdLockedTeamId !== null) {
+    return;
+  }
   requestAnimationFrame(fitStage);
+}
+
+function clearLockedUiHold() {
+  holdLockedTeamId = null;
+  if (holdLockedTimer !== null) {
+    clearTimeout(holdLockedTimer);
+    holdLockedTimer = null;
+  }
+}
+
+function scheduleLockedUiHold(teamId) {
+  clearLockedUiHold();
+  holdLockedTeamId = teamId;
+  holdLockedTimer = setTimeout(() => {
+    holdLockedTeamId = null;
+    holdLockedTimer = null;
+    if (lastState !== null) {
+      render(lastState);
+    }
+  }, AWARD_UI_HOLD_MS);
+}
+
+function lockedUiTeam(state) {
+  if (state.status === "locked" && state.team !== null) {
+    return state.team;
+  }
+  if (holdLockedTeamId !== null && state.status === "idle") {
+    return holdLockedTeamId;
+  }
+  return null;
+}
+
+function playAwardPop(button) {
+  button.classList.remove("award-pop-active");
+  void button.offsetWidth;
+  button.classList.add("award-pop-active");
+  button.addEventListener(
+    "animationend",
+    () => button.classList.remove("award-pop-active"),
+    { once: true },
+  );
 }
 
 function renderTeamDots(state) {
@@ -140,6 +188,14 @@ function renderTeamDots(state) {
 }
 
 function render(state) {
+  lastState = state;
+  if (state.status === "locked") {
+    clearLockedUiHold();
+  } else if (state.status !== "idle") {
+    clearLockedUiHold();
+  }
+
+  const lockedTeamId = lockedUiTeam(state);
   currentStatus = state.status;
   renderTeamDots(state);
   renderScoreboard(state);
@@ -198,20 +254,21 @@ function render(state) {
     return;
   }
 
-  if (state.status === "locked") {
-    const team = teams[String(state.team)];
+  if (lockedTeamId !== null) {
+    const team = teams[String(lockedTeamId)];
     stage.className = "locked";
     stage.style.background = team.color;
     title.textContent = team.name;
     hint.textContent = "Kolik bodů za odpověď?";
-    statusEl.textContent = `${team.name} přihlášen`;
+    statusEl.textContent =
+      state.status === "locked" ? `${team.name} přihlášen` : "Připraveno";
     scheduleFitStage();
     return;
   }
 
   stage.className = "idle";
   stage.style.background = "";
-  title.textContent = "Čeká se na přihlášení";
+  title.textContent = "Znáte odpověď? Stiskněte tlačítko!";
   hint.textContent = "První zmáčknuté tlačítko získá slovo";
   statusEl.textContent = "Připraveno";
   scheduleFitStage();
@@ -225,12 +282,25 @@ async function reset() {
 }
 
 async function awardPoints(points) {
+  if (currentStatus !== "locked" || lastState?.team === null || lastState?.team === undefined) {
+    return;
+  }
+  const button = award.querySelector(`button[data-points="${points}"]`);
+  if (button === null) {
+    return;
+  }
+  scheduleLockedUiHold(lastState.team);
+  playAwardPop(button);
   const response = await fetch("/api/award", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ points }),
   });
   if (!response.ok) {
+    clearLockedUiHold();
+    if (lastState !== null) {
+      render(lastState);
+    }
     return;
   }
 }
